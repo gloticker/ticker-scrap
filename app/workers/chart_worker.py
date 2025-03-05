@@ -54,7 +54,7 @@ async def store_symbol_data(redis_client, symbol: str, type: str, chart_data: di
                 market_hours=chart_data['market_hours']
             )
         )
-        redis_client.set(f"{type}.{symbol}", stored_data.model_dump_json())
+        redis_client.set(f"chart.{symbol}", stored_data.model_dump_json())
 
 
 async def collect_and_store_data():

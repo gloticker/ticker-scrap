@@ -7,6 +7,7 @@ class IndexSymbol(Enum):
     SNP500 = "^GSPC"    # S&P 500
     RUSSELL = "^RUT"    # Russell 2000
     VIX = "^VIX"        # VIX
+    FEAR_GREED = "Fear & Greed"  # Fear & Greed Index
 
 
 class StockSymbol(Enum):
@@ -23,6 +24,7 @@ class CryptoSymbol(Enum):
     BITCOIN = "BTC-USD"  # Bitcoin
     ETHEREUM = "ETH-USD"  # Ethereum
     SOLANA = "SOL-USD"  # Solana
+    BTC_DOMINANCE = "BTC.D"  # BTC Dominance
 
 
 class ForexSymbol(Enum):
@@ -35,6 +37,12 @@ class ForexSymbol(Enum):
 
 
 def get_symbols(enum_class) -> List[str]:
+    if enum_class == IndexSymbol:
+        # Fear & Greed 제외
+        return [e.value for e in enum_class if e != IndexSymbol.FEAR_GREED]
+    elif enum_class == CryptoSymbol:
+        # BTC.D 제외
+        return [e.value for e in enum_class if e != CryptoSymbol.BTC_DOMINANCE]
     return [e.value for e in enum_class]
 
 
@@ -53,3 +61,8 @@ class AssetType(Enum):
     STOCK = 'STOCK'
     CRYPTO = 'CRYPTO'
     FOREX = 'FOREX'
+
+
+class IndicatorType(Enum):
+    FEAR_GREED = 'fear-greed'
+    BTC_DOMINANCE = 'btc-dominance'

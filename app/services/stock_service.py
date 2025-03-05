@@ -104,8 +104,14 @@ class StockService:
                     result[symbol] = data
 
             if result:
+                # 스트림 발행
                 self.redis_client.publish(
                     self.channels[group_type.lower()],
+                    json.dumps(result)
+                )
+                # 스냅샷 저장
+                self.redis_client.set(
+                    f"snapshot.{group_type.lower()}",
                     json.dumps(result)
                 )
 
