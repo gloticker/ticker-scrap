@@ -108,7 +108,7 @@ pipeline {
 
                     for retry_count in \$(seq 20)
                     do
-                        if curl -s "${DEPLOY_URL}/health" > /dev/null
+                        if curl -s "${DEPLOY_URL}/ping" > /dev/null
                         then
                             echo "Build Success!"
                             curl -d '{"title":"ticker-scrap ${env.BRANCH_NAME} release:$BUILD_NUMBER","body":"Deployment Succeeded🚀"}' -H "Content-Type: application/json" -X POST ${PUSH_ALERT}
