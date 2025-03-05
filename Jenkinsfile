@@ -52,7 +52,7 @@ pipeline {
                         '
                         docker ps -q --filter "name=ticker-scrap" | xargs -r docker stop
                         docker ps -aq --filter "name=ticker-scrap" | xargs -r docker rm -f
-                        docker images ${DOCKER_REPOSITORY}:${env.IMAGE_NAME}-latest -q | xargs -r docker rmi
+                        docker images ${DOCKER_REPOSITORY}/${env.IMAGE_NAME}:latest -q | xargs -r docker rmi
                         '
                     """
                 }
@@ -89,6 +89,7 @@ pipeline {
 
                             docker run -i -e TZ=America/New_York --env-file ~/gloticker-ticker-scrap-credentials \\
                             --name ${params.IMAGE_NAME} --network ${params.DOCKER_NETWORK} \\
+                            --dns 8.8.8.8 --dns 8.8.4.4 \\
                             -p \${SERVER_PORT}:\${SERVER_PORT} \\
                             --restart unless-stopped \\
                             -d ${DOCKER_REPOSITORY}:latest
