@@ -9,14 +9,16 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import logging
 import time
+import requests
 
 from ..models.stock_models import (
     INDICES, STOCKS, CRYPTO, FOREX, ALL_SYMBOLS,
     AssetType, IndexSymbol, StockSymbol, CryptoSymbol, ForexSymbol
 )
-from ..utils.formatters import format_number, format_market_cap
-from ..core.redis_manager import RedisManager
-from ..constants.app_constants import StreamChannel, TimeConstants
+from app.utils.formatters import format_number, format_market_cap
+from app.core.redis_manager import RedisManager
+from app.constants.app_constants import StreamChannel, TimeConstants
+from app.constants.header_constants import USER_AGENTS, HEADERS_TEMPLATES
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +46,20 @@ class StockService:
         else:
             await asyncio.sleep(TimeConstants.DEFAULT_RETRY_DELAY)
 
-    async def fetch_single_ticker(self, symbol: str) -> Dict[str, Any]:
+    def get_random_headers(self):
+        headers = random.choice(HEADERS_TEMPLATES).copy()
+        headers['User-Agent'] = random.choice(USER_AGENTS)
+        return headers
+
+    async def fetch_single_ticker(self, symbol: str, session: requests.Session) -> Dict[str, Any]:
         try:
-            ticker = yf.Ticker(symbol)
+            ticker = yf.Ticker(symbol, session=session)
             info = ticker.info
-            self.error_count = 0  # 성공시 에러 카운트 리셋
+
+            if info is None:  # info가 None인 경우 처리
+                raise Exception(f"Failed to get info for {symbol}")
+
+            self.error_count = 0
             await asyncio.sleep(random.uniform(
                 TimeConstants.RANDOM_DELAY_MIN,
                 TimeConstants.RANDOM_DELAY_MAX
@@ -62,46 +73,53 @@ class StockService:
     async def process_and_publish_group(self, symbols: list, group_type: str) -> None:
         try:
             logger.info(f"Starting {group_type} data collection...")
+            session = requests.Session()
+            session.headers.update(self.get_random_headers())
+
             start_time = time.time()
             result = {}
 
             for symbol in symbols:
-                symbol, info = await self.fetch_single_ticker(symbol)
-                data = {}
+                try:
+                    symbol, info = await self.fetch_single_ticker(symbol, session)
+                    data = {}
 
-                if group_type == AssetType.INDEX.value:
-                    data = {
-                        "current_value": format_number(info.get('regularMarketPrice')),
-                        "change": format_number(info.get('regularMarketChange')),
-                        "change_percent": format_number(info.get('regularMarketChangePercent'))
-                    }
-                elif group_type == AssetType.STOCK.value:
-                    market_state = info.get('marketState', 'CLOSED')
-                    otc_price = None
-                    if market_state != 'REGULAR':
-                        if market_state == 'PRE':
-                            otc_price = info.get('preMarketPrice')
-                        else:
-                            otc_price = info.get('postMarketPrice')
+                    if group_type == AssetType.INDEX.value:
+                        data = {
+                            "current_value": format_number(info.get('regularMarketPrice')),
+                            "change": format_number(info.get('regularMarketChange')),
+                            "change_percent": format_number(info.get('regularMarketChangePercent'))
+                        }
+                    elif group_type == AssetType.STOCK.value:
+                        market_state = info.get('marketState', 'CLOSED')
+                        otc_price = None
+                        if market_state != 'REGULAR':
+                            if market_state == 'PRE':
+                                otc_price = info.get('preMarketPrice')
+                            else:
+                                otc_price = info.get('postMarketPrice')
 
-                    data = {
-                        "current_price": format_number(info.get('regularMarketPrice')),
-                        "market_cap": format_market_cap(info.get("marketCap")),
-                        "change": format_number(info.get('regularMarketChange')),
-                        "change_percent": format_number(info.get('regularMarketChangePercent')),
-                        "market_state": market_state,
-                        "otc_price": format_number(otc_price) if otc_price else None
-                    }
-                elif group_type == AssetType.CRYPTO.value:
-                    data = {
-                        "current_price": format_number(info.get('regularMarketPrice')),
-                        "market_cap": format_market_cap(info.get("marketCap")),
-                        "change": format_number(info.get('regularMarketChange')),
-                        "change_percent": format_number(info.get('regularMarketChangePercent'))
-                    }
+                        data = {
+                            "current_price": format_number(info.get('regularMarketPrice')),
+                            "market_cap": format_market_cap(info.get("marketCap")),
+                            "change": format_number(info.get('regularMarketChange')),
+                            "change_percent": format_number(info.get('regularMarketChangePercent')),
+                            "market_state": market_state,
+                            "otc_price": format_number(otc_price) if otc_price else None
+                        }
+                    elif group_type == AssetType.CRYPTO.value:
+                        data = {
+                            "current_price": format_number(info.get('regularMarketPrice')),
+                            "market_cap": format_market_cap(info.get("marketCap")),
+                            "change": format_number(info.get('regularMarketChange')),
+                            "change_percent": format_number(info.get('regularMarketChangePercent'))
+                        }
 
-                if data:
-                    result[symbol] = data
+                    if data:
+                        result[symbol] = data
+                except Exception as e:
+                    logger.error(f"Failed to process {symbol}: {str(e)}")
+                    continue  # 한 심볼이 실패해도 계속 진행
 
             if result:
                 # 스트림 발행
@@ -123,12 +141,14 @@ class StockService:
             raise
 
     async def process_forex(self) -> None:
-        """Forex는 tickers로 한 번에 처리"""
-        tickers = yf.Tickers(" ".join(FOREX))
-        result = {}
+        session = requests.Session()
+        session.headers.update(self.get_random_headers())
 
+        # Tickers 대신 개별 Ticker 사용
+        result = {}
         for symbol in FOREX:
-            info = tickers.tickers[symbol].info
+            ticker = yf.Ticker(symbol, session=session)
+            info = ticker.info
             result[symbol] = {
                 "rate": format_number(info.get('regularMarketPrice')),
                 "change": format_number(info.get('regularMarketChange')),
@@ -156,7 +176,9 @@ class StockService:
     async def get_chart_data(self) -> Dict[str, Any]:
         """Get last 30 trading days of daily chart data for all symbols"""
         try:
-            # 현재 시간 기준으로 45일 전 날짜 계산 (주말/공휴일 고려하여 여유있게)
+            session = requests.Session()
+            session.headers.update(self.get_random_headers())
+
             end_date = datetime.now(self.timezone)
             start_date = end_date - timedelta(days=45)
 
@@ -166,7 +188,8 @@ class StockService:
                 end=end_date.strftime('%Y-%m-%d'),
                 interval="1d",
                 prepost=True,
-                group_by='ticker'
+                group_by='ticker',
+                session=session
             )
 
             result = {}
