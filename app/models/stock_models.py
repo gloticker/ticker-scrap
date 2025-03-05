@@ -3,7 +3,7 @@ from typing import List
 INDICES = [
     "^IXIC",  # NASDAQ Composite
     "^GSPC",  # S&P 500
-    "^KS11",  # KOSPI
+    "^RUT",  # Russell 2000
     "^VIX",   # VIX
 ]
 
@@ -17,6 +17,12 @@ STOCKS = [
     "TSLA",  # Tesla
 ]
 
+CRYPTO = [
+    "BTC-USD",  # Bitcoin
+    "ETH-USD",  # Ethereum
+    "SOL-USD",  # Solana
+]
+
 FOREX = [
     "KRW=X",    # USD/KRW
     "EURKRW=X",  # EUR/KRW
@@ -24,4 +30,4 @@ FOREX = [
     "JPYKRW=X"  # JPY/KRW
 ]
 
-ALL_SYMBOLS = INDICES + STOCKS + FOREX
+ALL_SYMBOLS = INDICES + STOCKS + CRYPTO + FOREX

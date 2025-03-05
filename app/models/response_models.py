@@ -13,6 +13,15 @@ class StockData(BaseModel):
     market_cap: Optional[str]
     change: str
     change_percent: str
+    market_state: str
+    otc_price: Optional[str]
+
+
+class CryptoData(BaseModel):
+    current_price: str
+    market_cap: Optional[str]
+    change: str
+    change_percent: str
 
 
 class ForexData(BaseModel):
@@ -24,6 +33,7 @@ class ForexData(BaseModel):
 class MarketResponse(BaseModel):
     indices: Dict[str, IndexData]
     stocks: Dict[str, StockData]
+    crypto: Dict[str, CryptoData]
     forex: Dict[str, ForexData]
 
 

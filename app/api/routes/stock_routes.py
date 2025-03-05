@@ -17,8 +17,8 @@ async def get_current_market_data():
 
 
 @router.get("/chart", response_model=ChartResponse)
-async def get_chart_data(period: str = "1d", interval: str = "5m"):
+async def get_chart_data():
     try:
-        return await stock_service.get_chart_data(period, interval)
+        return await stock_service.get_chart_data()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
