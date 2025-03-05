@@ -85,15 +85,7 @@ pipeline {
                             ${PROXMOX_SERVER_ACCOUNT}@${PROXMOX_SERVER_URI}" \
                             -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP} \
                             '
-                            echo "===== 📌 .env 📌 ====="
-                            cat ~/gloticker-ticker-scrap-credentials
-                            echo "==================================="
-
                             SERVER_PORT=\$(grep SERVER_PORT ~/gloticker-ticker-scrap-credentials | cut -d "=" -f2)
-
-                            echo "===== 📌 SERVER_PORT 📌 ====="
-                            echo "Extracted SERVER_PORT: \$SERVER_PORT"
-                            echo "===================================="
 
                             docker run -i -e TZ=America/New_York --env-file ~/gloticker-ticker-scrap-credentials \\
                             --name ${params.IMAGE_NAME} --network ${params.DOCKER_NETWORK} \\
