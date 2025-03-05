@@ -6,6 +6,7 @@ from ..services.stock_service import StockService
 from ..models.stock_models import INDICES, STOCKS, CRYPTO, FOREX
 from ..core.redis_manager import RedisManager
 from ..models.data_models import StoredChartData, ChartMetadata
+from ..constants.app_constants import TimeConstants
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,9 +20,8 @@ async def is_market_closed() -> bool:
     et_tz = pytz.timezone('America/New_York')
     now_et = datetime.now(et_tz)
 
-    # Post-market은 20:00 ET에 종료
     market_close_time = now_et.replace(
-        hour=20, minute=0, second=0, microsecond=0)
+        hour=TimeConstants.MARKET_CLOSE_HOUR, minute=0, second=0, microsecond=0)
 
     return now_et >= market_close_time
 
@@ -30,7 +30,8 @@ async def get_next_run_time() -> datetime:
     """다음 실행 시간 계산 (ET 20:00)"""
     et_tz = pytz.timezone('America/New_York')
     now_et = datetime.now(et_tz)
-    target_time = now_et.replace(hour=20, minute=0, second=0, microsecond=0)
+    target_time = now_et.replace(
+        hour=TimeConstants.MARKET_CLOSE_HOUR, minute=0, second=0, microsecond=0)
 
     if now_et >= target_time:
         target_time += timedelta(days=1)
@@ -87,10 +88,7 @@ async def store_chart_data():
     """메인 워커 함수"""
     while True:
         try:
-            # 첫 실행 또는 정기 실행
             await collect_and_store_data()
-
-            # 다음 실행 시간까지 대기
             next_run = await get_next_run_time()
             now = datetime.now(pytz.timezone('America/New_York'))
             wait_seconds = (next_run - now).total_seconds()
@@ -99,7 +97,6 @@ async def store_chart_data():
                 f"Waiting {wait_seconds/3600:.2f} hours until next chart data collection at {next_run}")
             await asyncio.sleep(wait_seconds)
 
-            # 장 종료 확인
             if not await is_market_closed():
                 logger.warning(
                     "Market not fully closed yet, waiting for next cycle")
@@ -107,7 +104,7 @@ async def store_chart_data():
 
         except Exception as e:
             logger.error(f"Error storing chart data: {str(e)}")
-            await asyncio.sleep(300)  # 에러 발생시 5분 대기
+            await asyncio.sleep(TimeConstants.ERROR_WAIT_TIME)
 
 
 async def main():

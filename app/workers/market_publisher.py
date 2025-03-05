@@ -3,6 +3,8 @@ import logging
 import time
 from ..services.stock_service import StockService
 from typing import Dict, Any
+from ..constants.app_constants import TimeConstants
+from ..models.stock_models import INDICES, STOCKS, CRYPTO
 
 # 로깅 설정
 logging.basicConfig(
@@ -28,7 +30,7 @@ async def publish_market_data():
                 f"ALL MARKET data published. Took {elapsed_time:.2f} seconds")
         except Exception as e:
             logger.error(f"Market data publishing error: {str(e)}")
-            await asyncio.sleep(5)  # 에러 발생시 5초 대기
+            await asyncio.sleep(TimeConstants.DEFAULT_RETRY_DELAY)
 
 
 async def publish_forex_data():
@@ -44,10 +46,10 @@ async def publish_forex_data():
             elapsed_time = time.time() - start_time
             logger.info(
                 f"Forex data published. Took {elapsed_time:.2f} seconds")
-            await asyncio.sleep(60)
+            await asyncio.sleep(TimeConstants.DEFAULT_UPDATE_INTERVAL)
         except Exception as e:
             logger.error(f"Forex data publishing error: {str(e)}")
-            await asyncio.sleep(5)
+            await asyncio.sleep(TimeConstants.DEFAULT_RETRY_DELAY)
 
 
 async def main():
