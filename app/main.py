@@ -3,6 +3,7 @@ import asyncio
 from .workers.market_publisher import publish_market_data, publish_forex_data
 from .workers.chart_worker import store_chart_data
 from .core.redis_manager import RedisManager
+from .workers.market_indicators_worker import publish_market_indicators
 
 app = FastAPI(
     title="ticker scraper",
@@ -22,6 +23,7 @@ async def startup_event():
     asyncio.create_task(publish_market_data())
     asyncio.create_task(publish_forex_data())
     asyncio.create_task(store_chart_data())
+    asyncio.create_task(publish_market_indicators())
 
 
 @app.get("/ping")
