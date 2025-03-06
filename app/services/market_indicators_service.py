@@ -33,7 +33,7 @@ class MarketIndicatorsService:
                     return {
                         IndexSymbol.FEAR_GREED.value: {
                             "score": format_number(fear_greed_data.get('score', 0)),
-                            "rating": fear_greed_data.get('rating', 'Unknown')
+                            "rating": fear_greed_data.get('rating', 'Unknown').title()
                         }
                     }
         except Exception as e:

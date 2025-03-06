@@ -8,7 +8,7 @@ class IndexSymbol(Enum):
     RUSSELL = "^RUT"    # Russell 2000
     TLT = "^TLT"        # 20-Year Treasury Bond
     VIX = "^VIX"        # VIX
-    FEAR_GREED = "Fear & Greed"  # Fear & Greed Index
+    FEAR_GREED = "Fear&Greed"  # Fear & Greed Index
 
 
 class StockSymbol(Enum):
