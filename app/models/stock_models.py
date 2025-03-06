@@ -6,6 +6,7 @@ class IndexSymbol(Enum):
     NASDAQ = "^IXIC"    # NASDAQ Composite
     SNP500 = "^GSPC"    # S&P 500
     RUSSELL = "^RUT"    # Russell 2000
+    TLT = "^TLT"        # 20-Year Treasury Bond
     VIX = "^VIX"        # VIX
     FEAR_GREED = "Fear & Greed"  # Fear & Greed Index
 
