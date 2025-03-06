@@ -141,25 +141,35 @@ class StockService:
             raise
 
     async def process_forex(self) -> None:
-        session = requests.Session()
-        session.headers.update(self.get_random_headers())
+        try:
+            session = requests.Session()
+            session.headers.update(self.get_random_headers())
+            result = {}
 
-        # Tickers 대신 개별 Ticker 사용
-        result = {}
-        for symbol in FOREX:
-            ticker = yf.Ticker(symbol, session=session)
-            info = ticker.info
-            result[symbol] = {
-                "rate": format_number(info.get('regularMarketPrice')),
-                "change": format_number(info.get('regularMarketChange')),
-                "change_percent": format_number(info.get('regularMarketChangePercent'))
-            }
+            for symbol in FOREX:
+                ticker = yf.Ticker(symbol, session=session)
+                info = ticker.info
+                result[symbol] = {
+                    "rate": format_number(info.get('regularMarketPrice')),
+                    "change": format_number(info.get('regularMarketChange')),
+                    "change_percent": format_number(info.get('regularMarketChangePercent'))
+                }
 
-        if result:
-            self.redis_client.publish(
-                self.channels['forex'],
-                json.dumps(result)
-            )
+            if result:
+                # 스트림 발행
+                self.redis_client.publish(
+                    self.channels['forex'],
+                    json.dumps(result)
+                )
+                # 스냅샷 저장
+                self.redis_client.set(
+                    "snapshot.forex",
+                    json.dumps(result)
+                )
+
+        except Exception as e:
+            logger.error(f"Error publishing FOREX data: {str(e)}")
+            raise
 
     async def get_current_market_data(self) -> Dict[str, Dict[str, Any]]:
         try:
