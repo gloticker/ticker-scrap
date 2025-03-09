@@ -11,7 +11,7 @@ class StreamChannel(Enum):
 
 class ApiEndpoint(Enum):
     FEAR_GREED = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
-    BTC_DOMINANCE = "https://api.coingecko.com/api/v3/global"
+    BTC_DOMINANCE = "https://api.coinmarketcap.com/data-api/v3/global-metrics/dominance/overview"
 
 # 기타 상수들
 

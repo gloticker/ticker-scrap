@@ -1,6 +1,7 @@
 import aiohttp
 import json
 import logging
+import time
 from typing import Dict, Any
 from ..utils.formatters import format_number
 from ..core.redis_manager import RedisManager
@@ -27,7 +28,7 @@ class MarketIndicatorsService:
             }
 
             async with aiohttp.ClientSession() as session:
-                async with session.get(self.fear_greed_url, headers=headers) as response:
+                async with session.get(self.fear_greed_url, headers=headers, ssl=False) as response:
                     data = await response.json()
                     fear_greed_data = data.get('fear_and_greed', {})
                     return {
@@ -42,11 +43,17 @@ class MarketIndicatorsService:
 
     async def fetch_btc_dominance(self) -> Dict[str, Any]:
         try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'en-US,en;q=0.9'
+            }
+
             async with aiohttp.ClientSession() as session:
-                async with session.get(self.btc_dominance_url) as response:
+                async with session.get(self.btc_dominance_url, headers=headers, ssl=False) as response:
                     data = await response.json()
                     btc_dominance = data.get('data', {}).get(
-                        'market_cap_percentage', {}).get('btc', 0)
+                        'dominance', [])[0].get('mcProportion', 0)
                     return {
                         CryptoSymbol.BTC_DOMINANCE.value: {
                             "value": format_number(btc_dominance)
@@ -58,8 +65,10 @@ class MarketIndicatorsService:
 
     async def publish_fear_greed_index(self):
         try:
+            start_time = time.time()
+            logger.info("Starting Fear & Greed Index collection...")
+
             data = await self.fetch_fear_greed_index()
-            # 스트림 발행과 스냅샷 저장에 동일한 데이터 구조 사용
             self.redis_client.publish(
                 StreamChannel.INDEX.value,
                 json.dumps(data)
@@ -68,15 +77,20 @@ class MarketIndicatorsService:
                 f"snapshot.{IndicatorType.FEAR_GREED.value}",
                 json.dumps(data)
             )
-            logger.info("Fear & Greed Index published successfully")
+
+            elapsed_time = time.time() - start_time
+            logger.info(
+                f"Fear & Greed Index published. Took {elapsed_time:.2f} seconds")
         except Exception as e:
             logger.error(f"Error publishing Fear & Greed Index: {str(e)}")
             raise
 
     async def publish_btc_dominance(self):
         try:
+            start_time = time.time()
+            logger.info("Starting BTC Dominance collection...")
+
             data = await self.fetch_btc_dominance()
-            # 스트림 발행과 스냅샷 저장에 동일한 데이터 구조 사용
             self.redis_client.publish(
                 StreamChannel.CRYPTO.value,
                 json.dumps(data)
@@ -85,7 +99,10 @@ class MarketIndicatorsService:
                 f"snapshot.{IndicatorType.BTC_DOMINANCE.value}",
                 json.dumps(data)
             )
-            logger.info("BTC Dominance published successfully")
+
+            elapsed_time = time.time() - start_time
+            logger.info(
+                f"BTC Dominance published. Took {elapsed_time:.2f} seconds")
         except Exception as e:
             logger.error(f"Error publishing BTC Dominance: {str(e)}")
             raise
