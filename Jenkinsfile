@@ -52,7 +52,7 @@ pipeline {
                         '
                         docker ps -q --filter "name=ticker-scrap" | xargs -r docker stop
                         docker ps -aq --filter "name=ticker-scrap" | xargs -r docker rm -f
-                        docker images ${DOCKER_REPOSITORY}/${env.IMAGE_NAME}:latest -q | xargs -r docker rmi
+                        docker images ${DOCKER_REPOSITORY}:latest -q | xargs -r docker rmi
                         '
                     """
                 }
