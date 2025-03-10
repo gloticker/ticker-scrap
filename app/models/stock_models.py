@@ -1,33 +1,69 @@
+from enum import Enum
 from typing import List
 
-INDICES = [
-    "^IXIC",  # NASDAQ Composite
-    "^GSPC",  # S&P 500
-    "^RUT",  # Russell 2000
-    "^VIX",   # VIX
-]
 
-STOCKS = [
-    "AAPL",  # Apple
-    "NVDA",  # NVIDIA
-    "MSFT",  # Microsoft
-    "AMZN",  # Amazon
-    "GOOGL",  # Alphabet
-    "META",  # Meta
-    "TSLA",  # Tesla
-]
+class IndexSymbol(Enum):
+    NASDAQ = "^IXIC"    # NASDAQ Composite
+    SNP500 = "^GSPC"    # S&P 500
+    RUSSELL = "^RUT"    # Russell 2000
+    TLT = "^TLT"        # 20-Year Treasury Bond
+    VIX = "^VIX"        # VIX
+    FEAR_GREED = "Fear&Greed"  # Fear & Greed Index
 
-CRYPTO = [
-    "BTC-USD",  # Bitcoin
-    "ETH-USD",  # Ethereum
-    "SOL-USD",  # Solana
-]
 
-FOREX = [
-    "KRW=X",    # USD/KRW
-    "EURKRW=X",  # EUR/KRW
-    "CNYKRW=X",  # CNY/KRW
-    "JPYKRW=X"  # JPY/KRW
-]
+class StockSymbol(Enum):
+    APPLE = "AAPL"      # Apple
+    NVIDIA = "NVDA"     # NVIDIA
+    MICROSOFT = "MSFT"  # Microsoft
+    AMAZON = "AMZN"     # Amazon
+    ALPHABET = "GOOGL"  # Alphabet
+    META = "META"       # Meta
+    TESLA = "TSLA"      # Tesla
 
+
+class CryptoSymbol(Enum):
+    BITCOIN = "BTC-USD"  # Bitcoin
+    ETHEREUM = "ETH-USD"  # Ethereum
+    SOLANA = "SOL-USD"  # Solana
+    BTC_DOMINANCE = "BTC.D"  # BTC Dominance
+
+
+class ForexSymbol(Enum):
+    USDKRW = "KRW=X"     # USD/KRW
+    EURKRW = "EURKRW=X"  # EUR/KRW
+    CNYKRW = "CNYKRW=X"  # CNY/KRW
+    JPYKRW = "JPYKRW=X"  # JPY/KRW
+
+# 리스트로 변환하는 헬퍼 함수들
+
+
+def get_symbols(enum_class) -> List[str]:
+    if enum_class == IndexSymbol:
+        # Fear & Greed 제외
+        return [e.value for e in enum_class if e != IndexSymbol.FEAR_GREED]
+    elif enum_class == CryptoSymbol:
+        # BTC.D 제외
+        return [e.value for e in enum_class if e != CryptoSymbol.BTC_DOMINANCE]
+    return [e.value for e in enum_class]
+
+
+# 실제 사용할 리스트들
+INDICES = get_symbols(IndexSymbol)
+STOCKS = get_symbols(StockSymbol)
+CRYPTO = get_symbols(CryptoSymbol)
+FOREX = get_symbols(ForexSymbol)
 ALL_SYMBOLS = INDICES + STOCKS + CRYPTO + FOREX
+
+# 심볼 타입 매핑
+
+
+class AssetType(Enum):
+    INDEX = 'INDEX'
+    STOCK = 'STOCK'
+    CRYPTO = 'CRYPTO'
+    FOREX = 'FOREX'
+
+
+class IndicatorType(Enum):
+    FEAR_GREED = 'fear-greed'
+    BTC_DOMINANCE = 'btc-dominance'
