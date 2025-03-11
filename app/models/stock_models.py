@@ -27,6 +27,7 @@ class CryptoSymbol(Enum):
     ETHEREUM = "ETH-USD"  # Ethereum
     SOLANA = "SOL-USD"  # Solana
     BTC_DOMINANCE = "BTC.D"  # BTC Dominance
+    TOTAL3 = "TOTAL3"  # Total Market Cap (Excluding BTC and ETH)
 
 
 class ForexSymbol(Enum):
@@ -43,8 +44,8 @@ def get_symbols(enum_class) -> List[str]:
         # Fear & Greed 제외
         return [e.value for e in enum_class if e != IndexSymbol.FEAR_GREED]
     elif enum_class == CryptoSymbol:
-        # BTC.D 제외
-        return [e.value for e in enum_class if e != CryptoSymbol.BTC_DOMINANCE]
+        # BTC.D와 TOTAL3 제외
+        return [e.value for e in enum_class if e not in [CryptoSymbol.BTC_DOMINANCE, CryptoSymbol.TOTAL3]]
     return [e.value for e in enum_class]
 
 
@@ -68,3 +69,4 @@ class AssetType(Enum):
 class IndicatorType(Enum):
     FEAR_GREED = 'fear-greed'
     BTC_DOMINANCE = 'btc-dominance'
+    TOTAL3 = 'total3'

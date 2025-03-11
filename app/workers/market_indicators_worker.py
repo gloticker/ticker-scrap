@@ -17,6 +17,7 @@ async def publish_market_indicators():
         try:
             await service.publish_fear_greed_index()
             await service.publish_btc_dominance()
+            await service.publish_total3()
             await asyncio.sleep(TimeConstants.DEFAULT_UPDATE_INTERVAL)
         except Exception as e:
             logger.error(f"Market indicators publishing error: {str(e)}")
