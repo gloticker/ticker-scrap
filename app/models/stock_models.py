@@ -5,6 +5,7 @@ from typing import List
 class IndexSymbol(Enum):
     NASDAQ = "^IXIC"    # NASDAQ Composite
     SNP500 = "^GSPC"    # S&P 500
+    DOW = "^DJI"        # Dow Jones Industrial Average
     RUSSELL = "^RUT"    # Russell 2000
     TLT = "^TLT"        # 20-Year Treasury Bond
     VIX = "^VIX"        # VIX
