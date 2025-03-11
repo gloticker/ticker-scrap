@@ -18,5 +18,5 @@ def format_market_cap(value) -> Optional[str]:
     billion = 1_000_000_000       # 1B
 
     if value >= trillion:
-        return f"{format_number(value/trillion)}T"
-    return f"{format_number(value/billion)}B"
+        return f"{format_number(value/trillion)} T"
+    return f"{format_number(value/billion)} B"
