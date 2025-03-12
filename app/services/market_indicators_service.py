@@ -17,6 +17,7 @@ class MarketIndicatorsService:
         self.fear_greed_url = ApiEndpoint.FEAR_GREED.value
         self.btc_dominance_url = ApiEndpoint.BTC_DOMINANCE.value
         self.total3_url = ApiEndpoint.TOTAL3.value
+        self.total3_proportion = None
 
     async def fetch_fear_greed_index(self) -> Dict[str, Any]:
         try:
@@ -53,8 +54,10 @@ class MarketIndicatorsService:
             async with aiohttp.ClientSession() as session:
                 async with session.get(self.btc_dominance_url, headers=headers, ssl=False) as response:
                     data = await response.json()
-                    btc_dominance = data.get('data', {}).get(
-                        'dominance', [])[0].get('mcProportion', 0)
+                    dominance_data = data.get('data', {}).get('dominance', [])
+                    btc_dominance = dominance_data[0].get('mcProportion', 0)
+                    self.total3_proportion = dominance_data[2].get(
+                        'mcProportion', 0)  # save total3 proportion
                     return {
                         CryptoSymbol.BTC_DOMINANCE.value: {
                             "value": format_number(btc_dominance)
@@ -93,6 +96,7 @@ class MarketIndicatorsService:
 
                         return {
                             "TOTAL3": {
+                                "value": format_number(self.total3_proportion or 0),
                                 "market_cap": format_market_cap(market_data[0]),
                                 "change": change_value,
                                 "change_percent": format_number(change_percent)
