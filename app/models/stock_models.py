@@ -31,6 +31,7 @@ class CryptoSymbol(Enum):
 
 
 class ForexSymbol(Enum):
+    DXY = "DX-Y.NYB"  # DXY
     USDKRW = "KRW=X"     # USD/KRW
     EURKRW = "EURKRW=X"  # EUR/KRW
     CNYKRW = "CNYKRW=X"  # CNY/KRW
