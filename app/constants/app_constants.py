@@ -1,6 +1,22 @@
 from enum import Enum
 from typing import Final
 import os
+from functools import lru_cache
+
+
+def get_required_env(key: str) -> str:
+    value = os.environ.get(key)
+    if value is None:
+        raise ValueError(f"Required environment variable '{key}' is not set")
+    return value
+
+
+@lru_cache()
+def get_api_endpoint(key: str) -> str:
+    value = os.environ.get(key)
+    if value is None:
+        raise ValueError(f"Required environment variable '{key}' is not set")
+    return value
 
 
 class StreamChannel(Enum):
@@ -10,12 +26,21 @@ class StreamChannel(Enum):
     FOREX = 'forex.price.stream'
 
 
-class ApiEndpoint(Enum):
-    FEAR_GREED = os.environ['FEAR_GREED']
-    BTC_DOMINANCE = os.environ['BTC_DOMINANCE']
-    TOTAL3 = os.environ['TOTAL3']
+class ApiEndpoint:
+    @property
+    def FEAR_GREED(self) -> str:
+        return get_api_endpoint('FEAR_GREED')
 
-# 기타 상수들
+    @property
+    def BTC_DOMINANCE(self) -> str:
+        return get_api_endpoint('BTC_DOMINANCE')
+
+    @property
+    def TOTAL3(self) -> str:
+        return get_api_endpoint('TOTAL3')
+
+
+api_endpoints = ApiEndpoint()
 
 
 class TimeConstants:

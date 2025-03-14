@@ -5,7 +5,7 @@ import time
 from typing import Dict, Any
 from ..utils.formatters import format_number, format_market_cap
 from ..core.redis_manager import RedisManager
-from ..constants.app_constants import ApiEndpoint, StreamChannel
+from ..constants.app_constants import api_endpoints, StreamChannel
 from ..models.stock_models import IndexSymbol, CryptoSymbol, IndicatorType
 
 logger = logging.getLogger(__name__)
@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 class MarketIndicatorsService:
     def __init__(self):
         self.redis_client = RedisManager().client
-        self.fear_greed_url = ApiEndpoint.FEAR_GREED.value
-        self.btc_dominance_url = ApiEndpoint.BTC_DOMINANCE.value
-        self.total3_url = ApiEndpoint.TOTAL3.value
+        self.fear_greed_url = api_endpoints.FEAR_GREED
+        self.btc_dominance_url = api_endpoints.BTC_DOMINANCE
+        self.total3_url = api_endpoints.TOTAL3
         self.total3_proportion = None
 
     async def fetch_fear_greed_index(self) -> Dict[str, Any]:
