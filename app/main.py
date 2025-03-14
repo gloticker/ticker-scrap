@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 import asyncio
 import logging
-from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
+from prometheus_client import Gauge
 from .workers.market_publisher import publish_market_data, publish_forex_data
 from .workers.chart_worker import store_chart_data
 from .core.redis_manager import RedisManager
@@ -22,28 +23,29 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Redis 상태 게이지 정의
+redis_health = Gauge(
+    "redis_connection_status",
+    "Redis connection health (1=up, 0=down)"
+)
+
+
+def redis_health_metric():
+    redis_manager = RedisManager()
+    redis_health.set(1 if redis_manager.check_connection() else 0)
+
+
 # 프로메테우스 설정
 instrumentator = Instrumentator(
     should_group_status_codes=False,
     should_ignore_untemplated=True,
     should_instrument_requests_inprogress=True,
-    excluded_handlers=["/metrics", "/ping", "/health"],
-    buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+    excluded_handlers=["/metrics", "/ping", "/health"]
 )
 
-# Redis 상태 메트릭 추가
-
-
-def redis_health_function():
-    redis_manager = RedisManager()
-    return 1 if redis_manager.check_connection() else 0
-
-
-instrumentator.add_meter(
-    name="redis_health",
-    documentation="Redis connection health (1=up, 0=down)",
-    implementation=redis_health_function
-)
+# 기본 메트릭 추가
+instrumentator.add(metrics.default())
+instrumentator.add(lambda: redis_health_metric())
 
 instrumentator.instrument(app).expose(app)
 
