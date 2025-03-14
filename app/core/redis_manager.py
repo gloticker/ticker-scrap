@@ -2,8 +2,6 @@ import redis
 import logging
 from typing import Optional
 from redis.exceptions import ConnectionError
-import os
-from redis import Redis
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +21,13 @@ class RedisManager:
 
     def connect(self):
         try:
-            self._client = Redis(
-                host=os.getenv('REDIS_HOST', 'localhost'),
-                port=int(os.getenv('REDIS_PORT', 6379)),
-                password=os.getenv('REDIS_PASSWORD'),
+            self._client = redis.Redis(
+                host='localhost',
+                port=6379,
                 db=0,
                 decode_responses=True,
-                socket_timeout=5,
-                retry_on_timeout=True
+                socket_timeout=5,  # 타임아웃 설정
+                retry_on_timeout=True  # 타임아웃시 재시도
             )
         except Exception as e:
             logger.error(f"Redis connection error: {str(e)}")

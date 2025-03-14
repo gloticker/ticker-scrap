@@ -1,11 +1,20 @@
 from fastapi import FastAPI
 import asyncio
-from starlette_exporter import PrometheusMiddleware, handle_metrics
+import logging
+from prometheus_fastapi_instrumentator import Instrumentator
 from .workers.market_publisher import publish_market_data, publish_forex_data
 from .workers.chart_worker import store_chart_data
 from .core.redis_manager import RedisManager
 from .workers.market_indicators_worker import publish_market_indicators
 from datetime import datetime
+
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="ticker scraper",
@@ -13,14 +22,30 @@ app = FastAPI(
     version="1.0.0"
 )
 
-app.add_middleware(
-    PrometheusMiddleware,
-    app_name="ticker_scraper",
-    prefix="ticker",
-    skip_paths=["/ping", "/health", "/metrics"]
+# 프로메테우스 설정
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    should_ignore_untemplated=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers=["/metrics", "/ping", "/health"],
+    buckets=[0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
 )
 
-app.add_route("/metrics", handle_metrics)
+# Redis 상태 메트릭 추가
+
+
+def redis_health_function():
+    redis_manager = RedisManager()
+    return 1 if redis_manager.check_connection() else 0
+
+
+instrumentator.add_meter(
+    name="redis_health",
+    documentation="Redis connection health (1=up, 0=down)",
+    implementation=redis_health_function
+)
+
+instrumentator.instrument(app).expose(app)
 
 
 @app.on_event("startup")
