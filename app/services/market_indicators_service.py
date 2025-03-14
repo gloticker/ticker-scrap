@@ -14,10 +14,27 @@ logger = logging.getLogger(__name__)
 class MarketIndicatorsService:
     def __init__(self):
         self.redis_client = RedisManager().client
-        self.fear_greed_url = api_endpoints.FEAR_GREED
-        self.btc_dominance_url = api_endpoints.BTC_DOMINANCE
-        self.total3_url = api_endpoints.TOTAL3
-        self.total3_proportion = None
+        self._total3_proportion = None
+
+    @property
+    def fear_greed_url(self) -> str:
+        return api_endpoints.FEAR_GREED
+
+    @property
+    def btc_dominance_url(self) -> str:
+        return api_endpoints.BTC_DOMINANCE
+
+    @property
+    def total3_url(self) -> str:
+        return api_endpoints.TOTAL3
+
+    @property
+    def total3_proportion(self):
+        return self._total3_proportion
+
+    @total3_proportion.setter
+    def total3_proportion(self, value):
+        self._total3_proportion = value
 
     async def fetch_fear_greed_index(self) -> Dict[str, Any]:
         try:
