@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Final
+import os
 
 
 class StreamChannel(Enum):
@@ -10,9 +11,9 @@ class StreamChannel(Enum):
 
 
 class ApiEndpoint(Enum):
-    FEAR_GREED = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata"
-    BTC_DOMINANCE = "https://api.coinmarketcap.com/data-api/v3/global-metrics/dominance/overview"
-    TOTAL3 = "https://scanner.tradingview.com/global/scan"
+    FEAR_GREED = os.environ['FEAR_GREED']
+    BTC_DOMINANCE = os.environ['BTC_DOMINANCE']
+    TOTAL3 = os.environ['TOTAL3']
 
 # 기타 상수들
 
