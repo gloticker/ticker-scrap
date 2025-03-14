@@ -22,15 +22,32 @@ app = FastAPI(
 )
 
 # 프로메테우스 설정
-instrumentator = Instrumentator()
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    should_ignore_untemplated=True,
+    excluded_handlers=["/metrics"]
+)
 
-# 메트릭 설정
-instrumentator.add(metrics.request_size(metric_name="http_request_size_bytes"))
-instrumentator.add(metrics.response_size(
-    metric_name="http_response_size_bytes"))
-instrumentator.add(metrics.latency(
-    metric_name="http_request_duration_seconds"))
-instrumentator.add(metrics.requests(metric_name="http_requests_total"))
+# 메트릭 설정 (FastAPI Observability 대시보드용)
+instrumentator.add(
+    metrics.latency(
+        should_include_handler=True,
+        should_include_method=True,
+        should_include_status=True,
+        metric_namespace="http",
+        metric_subsystem="",
+        buckets=(0.005, 0.01, 0.025, 0.05, 0.075, 0.1,
+                 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0)
+    )
+).add(
+    metrics.requests(
+        should_include_handler=True,
+        should_include_method=True,
+        should_include_status=True,
+        metric_namespace="http",
+        metric_subsystem=""
+    )
+)
 
 # 메트릭 활성화
 instrumentator.instrument(app).expose(app)
