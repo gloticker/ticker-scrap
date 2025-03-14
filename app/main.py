@@ -2,10 +2,8 @@ from fastapi import FastAPI
 import asyncio
 import logging
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
-from prometheus_client import Gauge
 from .workers.market_publisher import publish_market_data, publish_forex_data
 from .workers.chart_worker import store_chart_data
-from .core.redis_manager import RedisManager
 from .workers.market_indicators_worker import publish_market_indicators
 from datetime import datetime
 
@@ -23,40 +21,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Redis 상태 게이지 정의
-redis_health = Gauge(
-    "redis_connection_status",
-    "Redis connection health (1=up, 0=down)"
-)
-
-
-def redis_health_metric():
-    redis_manager = RedisManager()
-    redis_health.set(1 if redis_manager.check_connection() else 0)
-
-
 # 프로메테우스 설정
-instrumentator = Instrumentator(
-    should_group_status_codes=False,
-    should_ignore_untemplated=True,
-    should_instrument_requests_inprogress=True,
-    excluded_handlers=["/metrics", "/ping", "/health"]
-)
+instrumentator = Instrumentator()
 
-# 기본 메트릭 추가
-instrumentator.add(metrics.default())
-instrumentator.add(lambda: redis_health_metric())
+# 메트릭 설정
+instrumentator.add(metrics.request_size(metric_name="http_request_size_bytes"))
+instrumentator.add(metrics.response_size(
+    metric_name="http_response_size_bytes"))
+instrumentator.add(metrics.latency(
+    metric_name="http_request_duration_seconds"))
+instrumentator.add(metrics.requests(metric_name="http_requests_total"))
 
+# 메트릭 활성화
 instrumentator.instrument(app).expose(app)
 
 
 @app.on_event("startup")
 async def startup_event():
-    # Redis 연결 확인
-    redis_manager = RedisManager()
-    if not redis_manager.check_connection():
-        raise Exception("Cannot connect to Redis server")
-
     # 백그라운드 태스크 시작
     asyncio.create_task(publish_market_data())
     asyncio.create_task(publish_forex_data())
@@ -70,12 +51,8 @@ async def jenkins_health_check():
 
 
 @app.get("/health")
-async def prometheus_health_check():
-    redis_manager = RedisManager()
-    redis_status = "up" if redis_manager.check_connection() else "down"
-
+async def health_check():
     return {
         "status": "ok",
-        "redis": redis_status,
         "timestamp": datetime.now().isoformat()
     }
