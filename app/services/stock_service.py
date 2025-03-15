@@ -93,11 +93,20 @@ class StockService:
                     elif group_type == AssetType.STOCK.value:
                         market_state = info.get('marketState', 'CLOSED')
                         otc_price = None
+                        otc_change = None
+                        otc_change_percent = None
+
                         if market_state != 'REGULAR':
                             if market_state == 'PRE':
                                 otc_price = info.get('preMarketPrice')
+                                otc_change = info.get('preMarketChange')
+                                otc_change_percent = info.get(
+                                    'preMarketChangePercent')
                             else:
                                 otc_price = info.get('postMarketPrice')
+                                otc_change = info.get('postMarketChange')
+                                otc_change_percent = info.get(
+                                    'postMarketChangePercent')
 
                         data = {
                             "current_price": format_number(info.get('regularMarketPrice')),
@@ -105,7 +114,9 @@ class StockService:
                             "change": format_number(info.get('regularMarketChange')),
                             "change_percent": format_number(info.get('regularMarketChangePercent')),
                             "market_state": market_state,
-                            "otc_price": format_number(otc_price) if otc_price else None
+                            "otc_price": format_number(otc_price) if otc_price else None,
+                            "otc_change": format_number(otc_change) if otc_change else None,
+                            "otc_change_percent": format_number(otc_change_percent) if otc_change_percent else None
                         }
                     elif group_type == AssetType.CRYPTO.value:
                         data = {
