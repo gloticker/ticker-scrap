@@ -47,7 +47,7 @@ pipeline {
             steps {
                 sshagent(credentials: ['gloticker-ubuntu']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP}
+                        ssh -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP} '
                         docker ps -q --filter "name=ticker-scrap" | xargs -r docker stop
                         docker ps -aq --filter "name=ticker-scrap" | xargs -r docker rm -f
                         docker images ${DOCKER_REPOSITORY}:latest -q | xargs -r docker rmi
