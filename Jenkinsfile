@@ -45,11 +45,9 @@ pipeline {
 
         stage('previous docker rm') {
             steps {
-                sshagent(credentials: ['deepeet-ubuntu', 'gloticker-ubuntu']) {
+                sshagent(credentials: ['gloticker-ubuntu']) {
                     sh """
-                        ssh -o ProxyCommand="ssh -W %h:%p -p ${PROXMOX_SSH_PORT} ${PROXMOX_SERVER_ACCOUNT}@${PROXMOX_SERVER_URI}" \
-                        -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP} \
-                        '
+                        ssh -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP}
                         docker ps -q --filter "name=ticker-scrap" | xargs -r docker stop
                         docker ps -aq --filter "name=ticker-scrap" | xargs -r docker rm -f
                         docker images ${DOCKER_REPOSITORY}:latest -q | xargs -r docker rmi
@@ -61,10 +59,9 @@ pipeline {
 
         stage('docker-hub pull') {
             steps {
-                sshagent(credentials: ['deepeet-ubuntu', 'gloticker-ubuntu']) {
+                sshagent(credentials: ['gloticker-ubuntu']) {
                     sh """
-                        ssh -o ProxyCommand="ssh -W %h:%p -p ${PROXMOX_SSH_PORT} ${PROXMOX_SERVER_ACCOUNT}@${PROXMOX_SERVER_URI}" \
-                        -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP} 'docker pull ${DOCKER_REPOSITORY}:latest'
+                        ssh -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP} 'docker pull ${DOCKER_REPOSITORY}:latest'
                     """
                 }
             }
@@ -73,18 +70,13 @@ pipeline {
         stage('service start') {
             steps {
                 withCredentials([file(credentialsId: 'gloticker-ticker-scrap-credentials', variable: 'ENV_CREDENTIALS')]) {
-                    sshagent(credentials: ['deepeet-ubuntu', 'gloticker-ubuntu']) {
+                    sshagent(credentials: ['gloticker-ubuntu']) {
                         sh """
-                            scp -o ProxyCommand="ssh -W %h:%p -p ${PROXMOX_SSH_PORT} \
-                            ${PROXMOX_SERVER_ACCOUNT}@${PROXMOX_SERVER_URI}" \
-                            -o StrictHostKeyChecking=no $ENV_CREDENTIALS ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP}:~/gloticker-ticker-scrap-credentials
+                            scp -o StrictHostKeyChecking=no $ENV_CREDENTIALS ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP}:~/gloticker-ticker-scrap-credentials
                         """
 
                         sh """
-                            ssh -o ProxyCommand="ssh -W %h:%p -p ${PROXMOX_SSH_PORT} \
-                            ${PROXMOX_SERVER_ACCOUNT}@${PROXMOX_SERVER_URI}" \
-                            -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP} \
-                            '
+                            ssh -o StrictHostKeyChecking=no ${GLOTICKER_SERVER_ACCOUNT}@${GLOTICKER_SERVER_IP} '
                             SERVER_PORT=\$(grep SERVER_PORT ~/gloticker-ticker-scrap-credentials | cut -d "=" -f2)
 
                             docker run -i -e TZ=America/New_York --env-file ~/gloticker-ticker-scrap-credentials \\
