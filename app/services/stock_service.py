@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import logging
 import time
-import requests
+from curl_cffi import requests
 
 from ..models.stock_models import (
     INDICES, STOCKS, CRYPTO, FOREX, ALL_SYMBOLS,
@@ -73,7 +73,7 @@ class StockService:
     async def process_and_publish_group(self, symbols: list, group_type: str) -> None:
         try:
             logger.info(f"Starting {group_type} data collection...")
-            session = requests.Session()
+            session = requests.Session(impersonate="chrome")
             session.headers.update(self.get_random_headers())
 
             start_time = time.time()
@@ -153,7 +153,7 @@ class StockService:
 
     async def process_forex(self) -> None:
         try:
-            session = requests.Session()
+            session = requests.Session(impersonate="chrome")
             session.headers.update(self.get_random_headers())
             result = {}
 
@@ -197,7 +197,7 @@ class StockService:
     async def get_chart_data(self) -> Dict[str, Any]:
         """Get last 30 trading days of daily chart data for all symbols"""
         try:
-            session = requests.Session()
+            session = requests.Session(impersonate="chrome")
             session.headers.update(self.get_random_headers())
 
             end_date = datetime.now(self.timezone)
